@@ -1,101 +1,106 @@
-import Image from "next/image";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Map from "@/components/Map";
+
+interface Child {
+  name: string;
+  age: number;
+  disability: string;
+  lat: number;
+  lng: number;
+  address: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [childrenData, setChildrenData] = useState<Child[]>([]);
+  const [selectedChild, setSelectedChild] = useState<Child | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Guimbal center coordinates
+  const guimbalLat = 10.6625344;
+  const guimbalLng = 122.3212464;
+
+  // Define the maximum radius (in degrees) for random location generation around Guimbal
+  const LATITUDE_RADIUS = 0.01; // 0.01 degrees ~ 1 km radius
+  const LONGITUDE_RADIUS = 0.01; // 0.01 degrees ~ 1 km radius
+
+  // Simulating children data with random coordinates within Guimbal's range
+  useEffect(() => {
+    const fetchedData: Child[] = [];
+    for (let i = 0; i < 10; i++) {
+      fetchedData.push({
+        name: `Child ${i + 1}`,
+        age: 10 + (i % 5),
+        disability: i % 2 === 0 ? "Visual Impairment" : "Hearing Impairment",
+        lat: guimbalLat + (Math.random() - 0.5) * LATITUDE_RADIUS * 2, // Random latitude within range
+        lng: guimbalLng + (Math.random() - 0.5) * LONGITUDE_RADIUS * 2, // Random longitude within range
+        address: `Random Address ${i + 1}`, // Randomized address
+      });
+    }
+    // Place one child farther from the center (away from the main location)
+    fetchedData[0].lat = guimbalLat + Math.random() * LATITUDE_RADIUS;
+    fetchedData[0].lng = guimbalLng + Math.random() * LONGITUDE_RADIUS;
+
+    setChildrenData(fetchedData);
+  }, []);
+
+  const handleChildSelection = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const selectedId = event.target.value;
+    const child = childrenData.find((child) => child.name === selectedId);
+    setSelectedChild(child || null);
+  };
+
+  return (
+    <div className='container mx-auto px-4 py-8 font-sans'>
+      <h1 className='text-4xl font-bold text-center mb-6 text-indigo-800'>
+        Mapping Disabilities in Guimbal, Iloilo
+      </h1>
+
+      {/* Dropdown to select a child */}
+      <div className='mb-6 text-center'>
+        <label className='block text-xl font-medium text-gray-700 mb-2'>
+          Select a Child
+        </label>
+        <select
+          onChange={handleChildSelection}
+          className='w-full max-w-xs mx-auto px-4 py-2 bg-indigo-600 text-white font-semibold border border-indigo-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+        >
+          <option value=''>Select a Child</option>
+          {childrenData.map((child, index) => (
+            <option key={index} value={child.name}>
+              {`Child ${index + 1}`} {/* Retain child number in dropdown */}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Map component to show the selected child's location */}
+      <Map childrenData={childrenData} selectedChild={selectedChild} />
+
+      {/* Display the selected child's details */}
+      {selectedChild && (
+        <div className='max-w-lg mx-auto bg-white p-6 rounded-lg shadow-lg mt-8 space-y-4'>
+          <h2 className='text-2xl font-semibold text-gray-800'>
+            Child Details
+          </h2>
+          <div className='space-y-2'>
+            <p className='text-lg'>
+              <strong>Name:</strong> {selectedChild.name}
+            </p>
+            <p className='text-lg'>
+              <strong>Age:</strong> {selectedChild.age}
+            </p>
+            <p className='text-lg'>
+              <strong>Disability:</strong> {selectedChild.disability}
+            </p>
+            <p className='text-lg'>
+              <strong>Address:</strong> {selectedChild.address}
+            </p>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
     </div>
   );
 }
